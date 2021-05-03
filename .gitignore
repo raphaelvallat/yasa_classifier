@@ -127,6 +127,9 @@ dmypy.json
 # Project-specific
 *.joblib
 .DS_Store
-validation/
-other/
-02_train_export_classifier-4_stages.ipynb
+feature_extraction/other/
+predict/other/
+training/02_train_export_classifier-4_stages.ipynb
+output/
+data/
+BAplots/
