@@ -34,10 +34,11 @@ def get_param_grid():
 
 def main():
     """Main."""
+
     # Define paths
-    parent_dir = os.getcwd()
+    parent_dir = os.path.dirname(os.getcwd())
     wdir = parent_dir + '/output/features/'
-    outdir = parent_dir + "/output/classifiers/"
+    outdir = parent_dir + "/output/gridsearch/"
     # Load the full dataframe
     df = pd.read_parquet(wdir + "features_all.parquet")
 
