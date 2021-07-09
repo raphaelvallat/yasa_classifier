@@ -43,9 +43,9 @@ def main():
     # Load the full dataframe
     df = pd.read_parquet(wdir + "features_all.parquet")
 
-    # IMPORTANT: Keep only a random sample of 25% of data
-    df = df.groupby(["dataset"]).sample(frac=0.25, random_state=42)
-    print(r"GridSearch will be performed on a random sample of 25% of data")
+    # IMPORTANT: Keep only a random subset of each dataset
+    df = df.groupby(["dataset"]).sample(frac=0.50, random_state=42)
+    print(r"GridSearch will be performed on a random sample of 50% of data")
     print("Shape after downsampling:", df.shape)
 
     # Predictors
@@ -69,8 +69,7 @@ def main():
     #       np.round(compute_class_weight('balanced', np.unique(y), y), 2))
 
     # Define cross-validation strategy
-    # For speed, we only use a 2-fold validation
-    cv = GroupKFold(n_splits=2)
+    cv = GroupKFold(n_splits=3)
     groups = subjects
 
     # Define hyper-parameters
@@ -81,7 +80,7 @@ def main():
         num_leaves=30,
         colsample_bytree=0.8,
         importance_type='gain',
-        n_jobs=2
+        n_jobs=4
     )
 
     # Define scoring metrics
@@ -101,7 +100,7 @@ def main():
     # Fit GridSearchCV
     clf = LGBMClassifier(**params)
     grid = GridSearchCV(clf, param_grid, cv=cv, scoring=scorer,
-                        refit=False, n_jobs=6, verbose=1)
+                        refit=False, n_jobs=3, verbose=3)
     grid.fit(X, y, groups=groups)
 
     # Sort by best performance

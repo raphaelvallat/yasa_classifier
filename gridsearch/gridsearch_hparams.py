@@ -57,7 +57,7 @@ clf = LGBMClassifier(
     n_jobs=4, verbose=-1)
 grid = GridSearchCV(
     clf, param_grid, cv=cv, scoring=scorer, refit=False, n_jobs=3,
-    return_train_score=True, verbose=1)
+    return_train_score=True, verbose=3)
 grid.fit(X, y, groups=groups)
 
 # Sort by best performance

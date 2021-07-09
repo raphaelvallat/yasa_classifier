@@ -106,7 +106,7 @@ def main():
     # Fit GridSearchCV
     clf = LGBMClassifier(**params)
     grid = GridSearchCV(clf, param_grid, cv=cv, scoring=scorer,
-                        refit=False, n_jobs=6, verbose=1)
+                        refit=False, n_jobs=6, verbose=3)
     grid.fit(X, y, groups=groups)
 
     # Sort by best performance
