@@ -27,7 +27,7 @@ groups = subjects
 # Define hyper-parameters
 param_grid = dict(
     boosting_type=["gbdt"],  # ["gbdt", "dart", "goss"],
-    n_estimators=[10, 20, 30, 50, 75, 100, 200, 300, 500, 750, 1000],
+    n_estimators=[10, 50, 100, 200, 300, 500],
     max_depth=[7],
     num_leaves=[70],
     colsample_bytree=[0.8],
