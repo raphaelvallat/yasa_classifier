@@ -59,7 +59,6 @@ def objective(trial):
     clf = LGBMClassifier(
         boosting_type="gbdt", n_estimators=n_est, num_leaves=n_leaves,
         max_depth=max_depth, colsample_bytree=colsample,
-        class_weight={'N1': 2.2, 'N2': 1, 'N3': 1, 'R': 1.2, 'W': 1},
         n_jobs=6, verbose=-1)
 
     cv_results = cross_validate(

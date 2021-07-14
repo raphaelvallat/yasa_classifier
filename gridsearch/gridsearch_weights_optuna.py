@@ -61,7 +61,7 @@ def objective(trial):
         boosting_type="gbdt", n_estimators=50, num_leaves=30,
         max_depth=7, colsample_bytree=0.8,
         class_weight={'N1': w_N1, 'N2': w_N2, 'N3': w_N3, 'R': w_R, 'W': w_W},
-        n_jobs=4, verbose=-1)
+        n_jobs=6, verbose=-1)
 
     cv_results = cross_validate(
         clf, X, y, scoring=scorer, cv=cv, groups=groups, n_jobs=3,

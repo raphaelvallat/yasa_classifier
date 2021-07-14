@@ -50,7 +50,6 @@ params = dict(
     n_estimators=50,
     max_depth=7,
     num_leaves=30,
-    class_weight={'N1': 2.2, 'N2': 1, 'N3': 1, 'R': 1.2, 'W': 1},
     colsample_bytree=0.8,
     importance_type='gain',
     n_jobs=4

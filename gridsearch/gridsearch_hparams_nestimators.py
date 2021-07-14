@@ -45,7 +45,6 @@ scorer = {
 
 # Fit GridSearchCV
 clf = LGBMClassifier(
-    class_weight={'N1': 2.2, 'N2': 1, 'N3': 1, 'R': 1.2, 'W': 1},
     n_jobs=4, verbose=-1)
 grid = GridSearchCV(
     clf, param_grid, cv=cv, scoring=scorer, refit=False, n_jobs=3,
