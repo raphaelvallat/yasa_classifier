@@ -4,6 +4,7 @@ import optuna
 import numpy as np
 import pandas as pd
 from lightgbm import LGBMClassifier
+from sklearn.metrics import f1_score, make_scorer
 from sklearn.model_selection import GroupKFold, cross_validate
 
 # Define paths
@@ -15,11 +16,11 @@ outdir = parent_dir + "/output/gridsearch/"
 # Load the full dataframe
 df = pd.read_parquet(wdir + "features_all.parquet")
 
-# Keep only a random sample of the participants (balanced across datasets)
+# OPTIONAL: Keep only a random sample of participants (balanced across dataset)
 # idx_subj = (
 #     df.reset_index()
 #       .groupby('dataset')['subj']
-#       .apply(lambda x: pd.Series(np.unique(x)).sample(frac=0.50, random_state=123))  # noqa
+#       .apply(lambda x: pd.Series(np.unique(x)).sample(frac=0.01, random_state=123))  # noqa
 #       .to_numpy()
 # )
 # df = df.loc[(idx_subj), :]
@@ -38,33 +39,49 @@ groups = subjects
 # Define objective function
 def objective(trial):
     """Objective function."""
-    n_est = trial.suggest_categorical(
-        "n_estimators", [50, 100, 200, 300, 500])
+    # Define parameter space
+    n_est = trial.suggest_int("n_estimators", 50, 500, step=50)
     n_leaves = trial.suggest_int("num_leaves", 10, 110, step=10)
     max_depth = trial.suggest_int("max_depth", 3, 15, step=2)
     colsample = trial.suggest_float("colsample_bytree", 0.5, 1, step=0.1)
 
+    # Define scorer
+    scorer = {
+        "accuracy": "accuracy",
+        "f1_N1": make_scorer(f1_score, labels=["N1"], average=None),
+        "f1_N2": make_scorer(f1_score, labels=["N2"], average=None),
+        "f1_N3": make_scorer(f1_score, labels=["N3"], average=None),
+        "f1_R": make_scorer(f1_score, labels=["R"], average=None),
+        "f1_W": make_scorer(f1_score, labels=["W"], average=None),
+    }
+
+    # Create estimator and cross-validate
     clf = LGBMClassifier(
         boosting_type="gbdt", n_estimators=n_est, num_leaves=n_leaves,
         max_depth=max_depth, colsample_bytree=colsample,
-        class_weight={'N1': 2, 'N2': 1, 'N3': 1, 'R': 1.4, 'W': 1.2},
-        n_jobs=4, verbose=-1)
+        class_weight={'N1': 2.2, 'N2': 1, 'N3': 1, 'R': 1.2, 'W': 1},
+        n_jobs=6, verbose=-1)
 
     cv_results = cross_validate(
-        clf, X, y, scoring="accuracy", cv=cv, groups=groups, n_jobs=3,
+        clf, X, y, scoring=scorer, cv=cv, groups=groups, n_jobs=3,
         return_train_score=True)
 
-    mean_test = cv_results['test_score'].mean()
-    mean_train = cv_results['train_score'].mean()
+    print(cv_results)
+
+    mean_test, mean_train = [], []
+    for c in scorer.keys():
+        mean_test.append(cv_results["test_%s" % c].mean())
+        mean_train.append(cv_results["train_%s" % c].mean())
+
+    mean_test = np.mean(mean_test)
+    mean_train = np.mean(mean_train)
     # https://www.jeffchiou.com/blog/hyperparameter-optimization-optuna/
-    # In this case the RMSE of the difference between testing and training is
-    # weighted four times less than the test accuracy.
-    opt = np.sqrt((mean_test - mean_train)**2) + 4 * (1 - mean_test)
+    opt = np.abs(mean_train - mean_test) + 4 * (1 - mean_test)
     return opt
 
 
 study = optuna.create_study(direction="minimize")
-study.optimize(objective, n_trials=100)
+study.optimize(objective, n_trials=200)
 print(study.best_trial)
 print(study.best_params)
 

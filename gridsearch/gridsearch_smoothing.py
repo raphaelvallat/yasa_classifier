@@ -8,7 +8,7 @@ from lightgbm import LGBMClassifier
 from sklearn.preprocessing import robust_scale
 from sklearn.model_selection import GroupKFold
 from sklearn.model_selection import cross_validate
-from sklearn.metrics import make_scorer, f1_score, matthews_corrcoef
+from sklearn.metrics import make_scorer, f1_score
 
 labels = ["N1", "N2", "N3", "R", "W"]
 
@@ -54,7 +54,7 @@ params = dict(
     n_estimators=50,
     max_depth=7,
     num_leaves=30,
-    class_weight={'N1': 2, 'N2': 1, 'N3': 1.2, 'R': 1.2, 'W': 1},
+    class_weight={'N1': 2.2, 'N2': 1, 'N3': 1, 'R': 1.2, 'W': 1},
     colsample_bytree=0.8,
     importance_type='gain',
     n_jobs=4
@@ -71,7 +71,6 @@ scorer = {
     "f1_N3": make_scorer(f1_score, labels=["N3"], average=None),
     "f1_R": make_scorer(f1_score, labels=["R"], average=None),
     "f1_W": make_scorer(f1_score, labels=["W"], average=None),
-    "mcc": make_scorer(matthews_corrcoef),
 }
 
 # Initialize output dict
@@ -85,7 +84,6 @@ grid_res = {
     "f1_N3": [],
     "f1_R": [],
     "f1_W": [],
-    "mcc": []
 }
 
 
@@ -145,7 +143,6 @@ for i, (p, c) in enumerate(combs):
     grid_res['f1_N3'].append(scores['test_f1_N3'].mean())
     grid_res['f1_R'].append(scores['test_f1_R'].mean())
     grid_res['f1_W'].append(scores['test_f1_W'].mean())
-    grid_res['mcc'].append(scores['test_mcc'].mean())
 
 # Convert to a dataframe
 grid_res = pd.DataFrame(grid_res)

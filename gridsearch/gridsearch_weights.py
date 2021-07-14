@@ -3,15 +3,14 @@ import os
 import pandas as pd
 from itertools import product
 from lightgbm import LGBMClassifier
-from sklearn.metrics import make_scorer, f1_score, matthews_corrcoef
+from sklearn.metrics import f1_score, make_scorer
 from sklearn.model_selection import GroupKFold, GridSearchCV
 
 labels = ["N1", "N2", "N3", "R", "W"]
 
-
 # Define paths
-parent_dir = os.path.dirname(os.getcwd())
-# parent_dir = "/home/walker/rvallat/yasa_classifier"  # Neurocluster
+# parent_dir = os.path.dirname(os.getcwd())
+parent_dir = "/home/walker/rvallat/yasa_classifier"  # Neurocluster
 wdir = parent_dir + '/output/features/'
 outdir = parent_dir + "/output/gridsearch/"
 # Load the full dataframe
@@ -65,13 +64,12 @@ scorer = {
     "f1_N3": make_scorer(f1_score, labels=["N3"], average=None),
     "f1_R": make_scorer(f1_score, labels=["R"], average=None),
     "f1_W": make_scorer(f1_score, labels=["W"], average=None),
-    "mcc": make_scorer(matthews_corrcoef),
 }
 
 # Create parameter grid
 weights = {
     "N1": [1.6, 1.8, 2, 2.2],
-    "N2": [0.8, 1],
+    "N2": [0.8, 0.9, 1],
     "N3": [1, 1.2, 1.4],
     "R": [1, 1.2, 1.4],
     "W": [1, 1.2, 1.4],
@@ -92,8 +90,8 @@ for w in prods:
 
 # Fit GridSearchCV
 clf = LGBMClassifier(**params)
-grid = GridSearchCV(clf, param_grid, cv=cv, scoring=scorer,
-                    refit=False, n_jobs=3, verbose=3)
+grid = GridSearchCV(
+    clf, param_grid, cv=cv, scoring=scorer, refit=False, n_jobs=3, verbose=3)
 grid.fit(X, y, groups=groups)
 
 # Sort by best performance

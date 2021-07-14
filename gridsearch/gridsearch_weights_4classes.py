@@ -3,7 +3,7 @@ import os
 import pandas as pd
 from itertools import product
 from lightgbm import LGBMClassifier
-from sklearn.metrics import make_scorer, f1_score, matthews_corrcoef
+from sklearn.metrics import make_scorer, f1_score
 from sklearn.model_selection import GroupKFold, GridSearchCV
 
 # Define paths
@@ -21,9 +21,9 @@ df['stage'].replace({
 print(df['stage'].value_counts(normalize=True))
 
 # IMPORTANT: Keep only a random sample of 25% of data
-df = df.groupby(["dataset"]).sample(frac=0.25, random_state=42)
-print(r"GridSearch will be performed on a random sample of 25% of data")
-print("Shape after downsampling:", df.shape)
+# df = df.groupby(["dataset"]).sample(frac=0.25, random_state=42)
+# print(r"GridSearch will be performed on a random sample of 25% of data")
+# print("Shape after downsampling:", df.shape)
 
 # Predictors
 cols_all = df.columns
@@ -68,7 +68,6 @@ scorer = {
     "f1_DEEP": make_scorer(f1_score, labels=["DEEP"], average=None),
     "f1_REM": make_scorer(f1_score, labels=["REM"], average=None),
     "f1_WAKE": make_scorer(f1_score, labels=["WAKE"], average=None),
-    "mcc": make_scorer(matthews_corrcoef),
 }
 
 # Create parameters grid

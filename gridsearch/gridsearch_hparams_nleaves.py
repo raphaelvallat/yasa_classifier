@@ -2,7 +2,7 @@
 import os
 import pandas as pd
 from lightgbm import LGBMClassifier
-from sklearn.metrics import make_scorer, matthews_corrcoef
+from sklearn.metrics import make_scorer, f1_score
 from sklearn.model_selection import GroupKFold, GridSearchCV
 
 # Define paths
@@ -36,13 +36,16 @@ param_grid = dict(
 # Define scoring metrics
 scorer = {
     "accuracy": "accuracy",
-    "f1_macro": "f1_macro",
-    "mcc": make_scorer(matthews_corrcoef),
+    "f1_N1": make_scorer(f1_score, labels=["N1"], average=None),
+    "f1_N2": make_scorer(f1_score, labels=["N2"], average=None),
+    "f1_N3": make_scorer(f1_score, labels=["N3"], average=None),
+    "f1_R": make_scorer(f1_score, labels=["R"], average=None),
+    "f1_W": make_scorer(f1_score, labels=["W"], average=None),
 }
 
 # Fit GridSearchCV
 clf = LGBMClassifier(
-    class_weight={'N1': 2, 'N2': 1, 'N3': 1, 'R': 1.4, 'W': 1.2},
+    class_weight={'N1': 2.2, 'N2': 1, 'N3': 1, 'R': 1.2, 'W': 1},
     n_jobs=4, verbose=-1)
 grid = GridSearchCV(
     clf, param_grid, cv=cv, scoring=scorer, refit=False, n_jobs=3,
