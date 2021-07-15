@@ -10,10 +10,28 @@ from sklearn.model_selection import GroupKFold
 from sklearn.model_selection import cross_validate
 from sklearn.metrics import make_scorer, f1_score
 
+
+# SCALING FUNCTIONS
+def rscale5(x):
+    """5-95% robust scaler."""
+    return robust_scale(x, quantile_range=(5, 95))
+
+
+def rscale10(x):
+    """10-90% robust scaler."""
+    return robust_scale(x, quantile_range=(10, 90))
+
+
+def rscale25(x):
+    """25-75% robust scaler."""
+    return robust_scale(x, quantile_range=(25, 75))
+
+
 labels = ["N1", "N2", "N3", "R", "W"]
 
 # Define paths
-parent_dir = os.path.dirname(os.getcwd())
+# parent_dir = os.path.dirname(os.getcwd())
+parent_dir = "/home/walker/rvallat/yasa_classifier"  # Neurocluster
 wdir = parent_dir + '/output/features/'
 outdir = parent_dir + "/output/gridsearch/"
 
@@ -21,14 +39,14 @@ outdir = parent_dir + "/output/gridsearch/"
 df = pd.read_parquet(wdir + "features_all.parquet")
 
 # Keep only a random sample of the participants (balanced across datasets)
-idx_subj = (
-    df.reset_index()
-      .groupby('dataset')['subj']
-      .apply(lambda x: pd.Series(np.unique(x)).sample(frac=0.50, random_state=42))  # noqa
-      .to_numpy()
-)
-df = df.loc[(idx_subj), :]
-print(df.shape)
+# idx_subj = (
+#     df.reset_index()
+#       .groupby('dataset')['subj']
+#       .apply(lambda x: pd.Series(np.unique(x)).sample(frac=0.05, random_state=1991))  # noqa
+#       .to_numpy()
+# )
+# df = df.loc[(idx_subj), :]
+# print(df.shape)
 
 # Columns that will be normalized
 cols_to_norm = df.columns[
@@ -37,7 +55,8 @@ cols_to_norm = df.columns[
 # Define temporal smoothing windows
 past = [None, 'p1', 'p2', 'p3', 'p5', 'p7', 'p9']
 cent = [None, 'c1', 'c2', 'c3', 'c5', 'c7', 'c9']
-combs = list(product(past, cent))
+scaler = ['r5', 'r10', 'r25']
+combs = list(product(scaler, past, cent))
 print(len(combs), "combinations found.")
 
 # For speed, we only use a 3-fold validation
@@ -56,7 +75,7 @@ params = dict(
     num_leaves=30,
     colsample_bytree=0.8,
     importance_type='gain',
-    n_jobs=4
+    n_jobs=6
 )
 
 print(params)
@@ -74,6 +93,7 @@ scorer = {
 
 # Initialize output dict
 grid_res = {
+    "scaler": [],
     "past": [],
     "center": [],
     "n_pred": [],
@@ -85,22 +105,23 @@ grid_res = {
     "f1_W": [],
 }
 
-
-def rscale(x):
-    """5-95% robust scaler."""
-    return robust_scale(x, quantile_range=(5, 95))
-
-
 # Define GroupBy object and index
 grp = df.groupby(level=0, sort=False)[cols_to_norm]
-epochs = df.index.get_level_values(1)
 
 # Loop across combinations
-for i, (p, c) in enumerate(combs):
+for i, (s, p, c) in enumerate(combs):
+
+    if s == "r5":
+        rscale = rscale5
+    elif s == "r10":
+        rscale = rscale10
+    elif s == "r25":
+        rscale = rscale25
 
     # Print info
     now = datetime.now()
-    print("%s | Combination %i / %i | %s, %s" % (now, i + 1, len(combs), p, c))
+    print("%s | Combination %i / %i | %s, %s, %s" %
+          (now, i + 1, len(combs), s, p, c))
 
     # Remove all the columns with norm
     cols_norm = df.columns[df.columns.str.contains("norm")]
@@ -109,21 +130,18 @@ for i, (p, c) in enumerate(combs):
     # Apply the rolling windows on each night separately
     if p is not None:
         w = 2 * int(p[1:])
-        rollp = grp.rolling(window=w, min_periods=1).mean()
+        rollp = grp.rolling(window=w, min_periods=1).mean().droplevel(0)
         rollp = rollp.groupby(level=0).transform(rscale).astype(np.float32)
         rollp = rollp.add_suffix('_%smin_norm' % p)
-        rollp['epoch'] = epochs
-        rollp.set_index("epoch", append=True, inplace=True)
         df = df.join(rollp)
 
     if c is not None:
         w = 2 * int(c[1:]) + 1  # Add one to get symmetrical window
         rollc = grp.rolling(
-            window=w, center=True, min_periods=1, win_type='triang').mean()
+            window=w, center=True, min_periods=1, win_type='triang'
+            ).mean().droplevel(0)
         rollc = rollc.groupby(level=0).transform(rscale).astype(np.float32)
         rollc = rollc.add_suffix('_%smin_norm' % c)
-        rollc['epoch'] = epochs
-        rollc.set_index("epoch", append=True, inplace=True)
         df = df.join(rollc)
 
     # Cross-validate
@@ -133,6 +151,7 @@ for i, (p, c) in enumerate(combs):
         clf, X, y, cv=cv, groups=groups, scoring=scorer, n_jobs=3)
 
     # Append to main output dict
+    grid_res['scaler'].append(s)
     grid_res['past'].append(str(p))
     grid_res['center'].append(str(c))
     grid_res['n_pred'].append(X.shape[1])
@@ -151,4 +170,4 @@ grid_res['mean_test_scores'] = grid_res.iloc[:, 3:].mean(1)
 grid_res.sort_values(by=['mean_test_scores'], ascending=False, inplace=True)
 
 # Export to CSV
-grid_res.to_csv(outdir + "gridsearch_smoothing.csv", index=False)
+grid_res.to_csv(outdir + "gridsearch_smoothing_scaling.csv", index=False)

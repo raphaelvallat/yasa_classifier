@@ -17,9 +17,9 @@ outdir = parent_dir + "/output/gridsearch/"
 df = pd.read_parquet(wdir + "features_all.parquet")
 
 # IMPORTANT: Keep only a random subset of each dataset
-# df = df.groupby(["dataset"]).sample(frac=0.50, random_state=42)
-# print(r"GridSearch will be performed on a random sample of 50% of data")
-# print("Shape after downsampling:", df.shape)
+df = df.groupby(["dataset"]).sample(frac=0.50, random_state=42)
+print(r"GridSearch will be performed on a random sample of 50% of data")
+print("Shape after downsampling:", df.shape)
 
 # Predictors
 cols_all = df.columns
