@@ -17,11 +17,6 @@ def rscale5(x):
     return robust_scale(x, quantile_range=(5, 95))
 
 
-def rscale10(x):
-    """10-90% robust scaler."""
-    return robust_scale(x, quantile_range=(10, 90))
-
-
 def rscale25(x):
     """25-75% robust scaler."""
     return robust_scale(x, quantile_range=(25, 75))
@@ -55,7 +50,7 @@ cols_to_norm = df.columns[
 # Define temporal smoothing windows
 past = [None, 'p1', 'p2', 'p3', 'p5', 'p7', 'p9']
 cent = [None, 'c1', 'c2', 'c3', 'c5', 'c7', 'c9']
-scaler = ['r5', 'r10', 'r25']
+scaler = ['r5', 'r25']
 combs = list(product(scaler, past, cent))
 print(len(combs), "combinations found.")
 
@@ -113,8 +108,6 @@ for i, (s, p, c) in enumerate(combs):
 
     if s == "r5":
         rscale = rscale5
-    elif s == "r10":
-        rscale = rscale10
     elif s == "r25":
         rscale = rscale25
 
@@ -166,7 +159,7 @@ for i, (s, p, c) in enumerate(combs):
 grid_res = pd.DataFrame(grid_res)
 
 # Calculate the mean test scores
-grid_res['mean_test_scores'] = grid_res.iloc[:, 3:].mean(1)
+grid_res['mean_test_scores'] = grid_res.iloc[:, 4:].mean(1)
 grid_res.sort_values(by=['mean_test_scores'], ascending=False, inplace=True)
 
 # Export to CSV

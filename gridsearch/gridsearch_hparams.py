@@ -1,4 +1,4 @@
-"""Cross-validation of the number of leaveson the training data."""
+"""Cross-validation of the hyper-parameters on the training data."""
 import os
 import pandas as pd
 from lightgbm import LGBMClassifier
@@ -6,7 +6,8 @@ from sklearn.metrics import make_scorer, f1_score
 from sklearn.model_selection import GroupKFold, GridSearchCV
 
 # Define paths
-parent_dir = os.path.dirname(os.getcwd())
+# parent_dir = os.path.dirname(os.getcwd())
+parent_dir = "/home/walker/rvallat/yasa_classifier"  # Neurocluster
 wdir = parent_dir + '/output/features/'
 outdir = parent_dir + "/output/gridsearch/"
 
@@ -27,10 +28,10 @@ groups = subjects
 # Define hyper-parameters
 param_grid = dict(
     boosting_type=["gbdt"],  # ["gbdt", "dart", "goss"],
-    n_estimators=[300],
-    max_depth=[7],
-    num_leaves=[10, 20, 30, 40, 50, 70, 90, 110],
-    colsample_bytree=[0.8],
+    n_estimators=[50, 100, 300, 500],
+    max_depth=[5, 7, 9],
+    num_leaves=[30, 50, 70, 90],
+    colsample_bytree=[0.6, 0.8],
 )
 
 # Define scoring metrics
@@ -45,7 +46,7 @@ scorer = {
 
 # Fit GridSearchCV
 clf = LGBMClassifier(
-    n_jobs=4, verbose=-1)
+    n_jobs=8, verbose=-1)
 grid = GridSearchCV(
     clf, param_grid, cv=cv, scoring=scorer, refit=False, n_jobs=3,
     return_train_score=True, verbose=3)
@@ -62,4 +63,4 @@ grid_res = grid_res.sort_values(
     by="mean_test_scores", ascending=False).reset_index(drop=True).round(5)
 
 # Export
-grid_res.to_csv(outdir + "gridsearch_hparams_nleaves.csv", index=False)
+grid_res.to_csv(outdir + "gridsearch_hparams.csv", index=False)

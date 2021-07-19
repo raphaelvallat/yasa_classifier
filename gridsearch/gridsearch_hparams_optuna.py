@@ -40,7 +40,7 @@ groups = subjects
 def objective(trial):
     """Objective function."""
     # Define parameter space
-    n_est = trial.suggest_int("n_estimators", 50, 500, step=50)
+    n_est = trial.suggest_categorical("n_estimators", [50, 100, 200, 300, 500])
     n_leaves = trial.suggest_int("num_leaves", 10, 110, step=10)
     max_depth = trial.suggest_int("max_depth", 3, 15, step=2)
     colsample = trial.suggest_float("colsample_bytree", 0.5, 1, step=0.1)
