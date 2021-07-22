@@ -26,12 +26,31 @@ cv = GroupKFold(n_splits=3)
 groups = subjects
 
 # Define hyper-parameters
+# .. Run 1
+# param_grid = dict(
+#     boosting_type=["gbdt"],  # ["gbdt", "dart", "goss"],
+#     n_estimators=[50, 100, 300, 500],
+#     max_depth=[5, 7, 9],
+#     num_leaves=[30, 50, 70, 90],
+#     colsample_bytree=[0.6, 0.8],
+# )
+
+# .. Run 2
+# param_grid = dict(
+#     boosting_type=["gbdt", "dart"],
+#     n_estimators=[200, 400],
+#     max_depth=[5, 7],
+#     num_leaves=[30, 90],
+#     colsample_bytree=[0.5, 0.7],
+# )
+
+# .. Run 3
 param_grid = dict(
-    boosting_type=["gbdt"],  # ["gbdt", "dart", "goss"],
-    n_estimators=[50, 100, 300, 500],
-    max_depth=[5, 7, 9],
-    num_leaves=[30, 50, 70, 90],
-    colsample_bytree=[0.6, 0.8],
+    boosting_type=["gbdt"],
+    n_estimators=[400],
+    max_depth=[4, 6, 8],
+    num_leaves=[40, 80],
+    colsample_bytree=[0.5, 0.6],
 )
 
 # Define scoring metrics
@@ -46,7 +65,7 @@ scorer = {
 
 # Fit GridSearchCV
 clf = LGBMClassifier(
-    n_jobs=8, verbose=-1)
+    n_jobs=6, verbose=-1)
 grid = GridSearchCV(
     clf, param_grid, cv=cv, scoring=scorer, refit=False, n_jobs=3,
     return_train_score=True, verbose=3)
