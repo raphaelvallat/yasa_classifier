@@ -26,9 +26,19 @@ def consensus_scores(hypnos, idx_best_hypno):
     When ties are present, use the best scorer of the record.
 
     For more details, see Guillot et al 2020.
+    
+    Currently only 4, 5 scorers (DOD) or 6 scorers (IS-RC) are supported.
+    The hypnograms should have the following stages: [0, 1, 2, 3, 4]
+    
+    Parameters
+    ----------
+    hypnos : np.array 
+        The hypnograms, shape = (n_scorers, n_epochs)
+    idx_best_hypno : int
+        The index number (iloc) of the most reliable scorer
     """
     from scipy.stats import mode
-    # Initialize output array
+    n_scorers = hypnos.shape[0]
     hyp_cons = np.zeros_like(hypnos[0, :])
 
     for i, _ in enumerate(hyp_cons):
@@ -36,10 +46,30 @@ def consensus_scores(hypnos, idx_best_hypno):
         mod, count = mod[0], count[0]
         n_unique = len(np.unique(hypnos[:, i]))
         # Deal with ties
-        if count == 2 and n_unique == 3:
-            # [0, 0, 1, 1, 2] - n_unique = 3, tie, take best scorer
-            # [0, 0, 1, 2, 3] - n_unique = 4, no tie
-            mod = hypnos[idx_best_hypno, i]
-        hyp_cons[i] = mod
+        if n_scorers == 4:
+            if count == 2 and n_unique == 2:
+                # [0, 0, 1, 1] - n_unique = 2, tie, take best scorer
+                # [0, 0, 1, 2] - n_unique = 3, no tie
+                mod = hypnos[idx_best_hypno, i]
+        elif n_scorers == 5:
+            if count == 2 and n_unique == 3:
+                # [0, 0, 1, 1, 2] - n_unique = 3, tie, take best scorer
+                # [0, 0, 1, 2, 3] - n_unique = 4, no tie
+                mod = hypnos[idx_best_hypno, i]
+        elif n_scorers == 6:
+            if count == 3 and n_unique == 2:
+                # [0, 0, 0, 1, 1, 1]
+                mod = hypnos[idx_best_hypno, i]
+            if count == 2 and n_unique == 3:
+                # [0, 0, 1, 1, 2, 2]
+                mod = hypnos[idx_best_hypno, i]
+            if count == 2 and n_unique == 4:
+                # [0, 0, 1, 1, 2, 3]
+                mod = hypnos[idx_best_hypno, i]
+        else:
+            raise ValueError("%i scorers not supported" % n_scorers)
 
+        # If no ties, just take the mod
+        hyp_cons[i] = mod
+        
     return hyp_cons
