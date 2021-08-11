@@ -49,6 +49,8 @@ print("Fitting done!")
 explainer = shap.TreeExplainer(clf)
 shap_values = explainer.shap_values(X, tree_limit=50)
 # Sum absolute values across all stages and then average across all samples
+# Gives similar results as summing the absolute values across all samples and then
+# taking average or sum across sleep stage to get one value per feature.
 shap_sum = np.abs(shap_values).sum(axis=0).mean(axis=0)
 df_shap = pd.Series(shap_sum, index=X.columns.tolist(), name="Importance")
 df_shap.sort_values(ascending=False, inplace=True)
